@@ -11,28 +11,34 @@ int contagem = 0;
 int restart = 1;
 
 void* Esteira1Thread(void* arg) {
-    while (restart) {
-        pesoTotal += 5;
-        contagem++;
-        sleep(1);
+    while (1){
+        while (restart) {
+            pesoTotal += 5;
+            contagem++;
+            sleep(1);
+        }
     }
     return NULL;
 }
 
 void* Esteira2Thread(void* arg) {
-    while (restart) {
-        pesoTotal += 2;
-        contagem++;
-        usleep(500000);
+    while (1){
+        while (restart) {
+            pesoTotal += 2;
+            contagem++;
+            usleep(500000);
+        }
     }
     return NULL;
 }
 
 void* Esteira3Thread(void* arg) {
-    while (restart) {
-        pesoTotal += 0.5;
-        contagem++;
-        usleep(100000);
+    while (1){
+        while (restart) {
+            pesoTotal += 0.5;
+            contagem++;
+            usleep(100000);
+        }
     }
     return NULL;
 }
@@ -46,9 +52,6 @@ void* InputThread(void* arg) {
         } else if (strcmp(input, "restart\n") == 0) {
             restart = 1;
             pthread_t thread_id;
-            pthread_create(&thread_id, NULL, Esteira1Thread, NULL);
-            pthread_create(&thread_id, NULL, Esteira2Thread, NULL);
-            pthread_create(&thread_id, NULL, Esteira3Thread, NULL);
         }
     }
     return NULL;
