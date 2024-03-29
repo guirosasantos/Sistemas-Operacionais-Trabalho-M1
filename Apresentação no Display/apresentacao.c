@@ -8,13 +8,23 @@ int main() {
     char buf[256];
     int bytesRead;
 
+    int contagem;
+    float pesoTotal;
+    float ultimoPeso = 0;
+
     file = open(pipefile, O_RDONLY);
 
     while(1) {
-        bytesRead = read(file, buf, 256);
+        bytesRead = read(file, &contagem, sizeof(contagem));
         if(bytesRead != 0) {
-            printf("%s\n", buf);
+            printf("Contagem: %d\n", contagem);
         }
+
+        bytesRead = read(file, &pesoTotal, sizeof(pesoTotal));
+        if(bytesRead != 0) {
+            printf("Peso total: %f\n", pesoTotal);
+        }
+
         sleep(1);
     }
 

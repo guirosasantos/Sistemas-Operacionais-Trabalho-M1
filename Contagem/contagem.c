@@ -23,7 +23,7 @@ void* Esteira2Thread(void* arg) {
     while (restart) {
         pesoTotal += 2;
         contagem++;
-        sleep(0.5);
+        usleep(500000);
     }
     return NULL;
 }
@@ -32,7 +32,7 @@ void* Esteira3Thread(void* arg) {
     while (restart) {
         pesoTotal += 0.5;
         contagem++;
-        sleep(0.1);
+        usleep(100000);
     }
     return NULL;
 }
@@ -48,9 +48,26 @@ void* InputThread(void* arg) {
             pthread_t thread_id;
             pthread_create(&thread_id, NULL, Esteira1Thread, NULL);
             pthread_create(&thread_id, NULL, Esteira2Thread, NULL);
+            pthread_create(&thread_id, NULL, Esteira3Thread, NULL);
         }
     }
     return NULL;
+}
+
+void pararThreads() {
+    restart = 0;
+}
+
+void atualizarPeso(float *pesoAtual) {
+    *pesoAtual = pesoTotal;
+}
+
+void atualizarContagem(int *contagemInicial) {
+    *contagemInicial = contagem;
+}
+
+void retornarThreads() {
+    restart = 1;
 }
 
 int main() {
@@ -58,21 +75,32 @@ int main() {
     char * pipefile = "/tmp/pipefile";
     pthread_t thread_id, input_thread_id;
     char buffer[64];
+    float pesoAtual = 0;
+    int contagemInicial = 0;
 
     pthread_create(&thread_id, NULL, Esteira1Thread, NULL);
     pthread_create(&thread_id, NULL, Esteira2Thread, NULL);
+    pthread_create(&thread_id, NULL, Esteira3Thread, NULL);
+
     pthread_create(&input_thread_id, NULL, InputThread, NULL);
 
     mkfifo(pipefile, 0666);
     file = open(pipefile, O_WRONLY);
 
     while (1) {
-        if (restart) {
-            sprintf(buffer, "Contagem: %d\n Peso total atual: %.2f kg\n", contagem, pesoTotal);
-            write(file, buffer, strlen(buffer) + 1);
+    if (restart) {
+        write(file, &contagem, sizeof(contagem));
+
+        if (contagem - contagemInicial >= 1500){
+            pararThreads();
+            atualizarPeso(&pesoAtual);
+            atualizarContagem(&contagemInicial);
+            retornarThreads();
         }
-        sleep(1);
+        write(file, &pesoAtual, sizeof(pesoAtual));
     }
+    sleep(1);
+}
 
     pthread_join(thread_id, NULL);
 
