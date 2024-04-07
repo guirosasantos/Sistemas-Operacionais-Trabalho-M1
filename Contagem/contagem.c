@@ -13,44 +13,22 @@ int running = 1;
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
-void* Esteira1Thread(void* arg) {
-    while (1){
-        pthread_mutex_lock(&mutex);
-        while (!running) {
-            pthread_cond_wait(&cond, &mutex);
-        }
-        pesoTotal += 5;
-        contagem++;
-        pthread_mutex_unlock(&mutex);
-        sleep(1);
-    }
-    return NULL;
-}
+typedef struct {
+    float peso;
+    int sleepTime;
+} EsteiraInfo;
 
-void* Esteira2Thread(void* arg) {
+void* EsteiraThread(void* arg) {
+    EsteiraInfo* info = (EsteiraInfo*) arg;
     while (1){
         pthread_mutex_lock(&mutex);
         while (!running) {
             pthread_cond_wait(&cond, &mutex);
         }
-        pesoTotal += 2;
+        pesoTotal += info->peso;
         contagem++;
         pthread_mutex_unlock(&mutex);
-        usleep(500000);
-    }
-    return NULL;
-}
-
-void* Esteira3Thread(void* arg) {
-    while (1){
-        pthread_mutex_lock(&mutex);
-        while (!running) {
-            pthread_cond_wait(&cond, &mutex);
-        }
-        pesoTotal += 0.5;
-        contagem++;
-        pthread_mutex_unlock(&mutex);
-        usleep(100000);
+        usleep(info->sleepTime);
     }
     return NULL;
 }
@@ -62,7 +40,7 @@ void* InputThread(void* arg) {
         pthread_mutex_lock(&mutex);
         if (strcmp(input, "pause\n") == 0) {
             running = 0;
-        } else if (strcmp(input, "restart\n") == 0) {
+        } else if (strcmp(input, "resume\n") == 0) {
             running = 1;
             pthread_cond_broadcast(&cond);
         }
@@ -94,9 +72,13 @@ int main() {
     float pesoAtual = 0;
     int contagemInicial = 0;
 
-    pthread_create(&esteira1_thread_id, NULL, Esteira1Thread, NULL);
-    pthread_create(&esteira2_thread_id, NULL, Esteira2Thread, NULL);
-    pthread_create(&esteira3_thread_id, NULL, Esteira3Thread, NULL);
+    EsteiraInfo esteira1Info = {5, 1000000};
+    EsteiraInfo esteira2Info = {2, 500000};
+    EsteiraInfo esteira3Info = {0.5, 100000};
+
+    pthread_create(&esteira1_thread_id, NULL, EsteiraThread, &esteira1Info);
+    pthread_create(&esteira2_thread_id, NULL, EsteiraThread, &esteira2Info);
+    pthread_create(&esteira3_thread_id, NULL, EsteiraThread, &esteira3Info);
 
     pthread_create(&input_thread_id, NULL, InputThread, NULL);
 
