@@ -5,7 +5,6 @@
 int main() {
     int file;
     char * pipefile = "/tmp/pipefile";
-    char buf[256];
     int bytesRead;
 
     int contagem;
@@ -22,7 +21,7 @@ int main() {
 
         bytesRead = read(file, &pesoTotal, sizeof(pesoTotal));
         if(bytesRead != 0) {
-            printf("Peso total: %f\n", pesoTotal);
+            printf("Peso total: %.1fkg\n", pesoTotal);
         }
 
         sleep(1);
