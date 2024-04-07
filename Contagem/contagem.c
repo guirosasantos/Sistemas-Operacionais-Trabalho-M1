@@ -8,45 +8,49 @@
 
 float pesoTotal = 0;
 int contagem = 0;
-int restart = 1;
+int running = 1;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t cond = PTHREAD_COND_INITIALIZER;
 
 void* Esteira1Thread(void* arg) {
     while (1){
-        if (restart) {
-            pthread_mutex_lock(&mutex);
-            pesoTotal += 5;
-            contagem++;
-            pthread_mutex_unlock(&mutex);
-            sleep(1);
+        pthread_mutex_lock(&mutex);
+        while (!running) {
+            pthread_cond_wait(&cond, &mutex);
         }
+        pesoTotal += 5;
+        contagem++;
+        pthread_mutex_unlock(&mutex);
+        sleep(1);
     }
     return NULL;
 }
 
 void* Esteira2Thread(void* arg) {
     while (1){
-        if (restart) {
-            pthread_mutex_lock(&mutex);
-            pesoTotal += 2;
-            contagem++;
-            pthread_mutex_unlock(&mutex);
-            usleep(500000);
+        pthread_mutex_lock(&mutex);
+        while (!running) {
+            pthread_cond_wait(&cond, &mutex);
         }
+        pesoTotal += 2;
+        contagem++;
+        pthread_mutex_unlock(&mutex);
+        usleep(500000);
     }
     return NULL;
 }
 
 void* Esteira3Thread(void* arg) {
     while (1){
-        if (restart) {
-            pthread_mutex_lock(&mutex);
-            pesoTotal += 0.5;
-            contagem++;
-            pthread_mutex_unlock(&mutex);
-            usleep(100000);
+        pthread_mutex_lock(&mutex);
+        while (!running) {
+            pthread_cond_wait(&cond, &mutex);
         }
+        pesoTotal += 0.5;
+        contagem++;
+        pthread_mutex_unlock(&mutex);
+        usleep(100000);
     }
     return NULL;
 }
@@ -57,9 +61,10 @@ void* InputThread(void* arg) {
         fgets(input, 64, stdin);
         pthread_mutex_lock(&mutex);
         if (strcmp(input, "pause\n") == 0) {
-            restart = 0;
+            running = 0;
         } else if (strcmp(input, "restart\n") == 0) {
-            restart = 1;
+            running = 1;
+            pthread_cond_broadcast(&cond);
         }
         pthread_mutex_unlock(&mutex);
     }
@@ -67,27 +72,19 @@ void* InputThread(void* arg) {
 }
 
 void pararThreads() {
-    pthread_mutex_lock(&mutex);
-    restart = 0;
-    pthread_mutex_unlock(&mutex);
+    running = 0;
 }
 
 void atualizarPeso(float *pesoAtual) {
-    pthread_mutex_lock(&mutex);
     *pesoAtual = pesoTotal;
-    pthread_mutex_unlock(&mutex);
 }
 
 void atualizarContagem(int *contagemInicial) {
-    pthread_mutex_lock(&mutex);
     *contagemInicial = contagem;
-    pthread_mutex_unlock(&mutex);
 }
 
 void retornarThreads() {
-    pthread_mutex_lock(&mutex);
-    restart = 1;
-    pthread_mutex_unlock(&mutex);
+    running = 1;
 }
 
 int main() {
@@ -108,7 +105,7 @@ int main() {
 
     while (1) {
         pthread_mutex_lock(&mutex);
-        if (restart) {   
+        if (running) {   
             write(file, &contagem, sizeof(contagem));
 
             if (contagem - contagemInicial >= 1500){
