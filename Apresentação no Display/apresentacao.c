@@ -28,7 +28,7 @@ int main() {
     }
 
     close(file);                                                // Fecha o descritor do arquivo
-    unlink(pipefile)                                            // Deleta o pipe
+    unlink(pipefile);                                           // Deleta o pipe
 
     return 0;
 }
