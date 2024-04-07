@@ -6,8 +6,9 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-float pesoTotal = 0;
+float pesos[1500];
 int contagem = 0;
+int contagemTotal = 0;
 int running = 1;
 
 pthread_mutex_t mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -25,8 +26,11 @@ void* EsteiraThread(void* arg) {
         while (!running) {
             pthread_cond_wait(&cond, &mutex);
         }
-        pesoTotal += info->peso;
-        contagem++;
+        if (contagem < 1500){
+            pesos[contagem] = info->peso;
+            contagem++;
+            contagemTotal++;
+        }
         pthread_mutex_unlock(&mutex);
         usleep(info->sleepTime);
     }
@@ -54,11 +58,13 @@ void pararThreads() {
 }
 
 void atualizarPeso(float *pesoAtual) {
-    *pesoAtual = pesoTotal;
+    for (int i = 0; i < 1500; i++) {
+        *pesoAtual += pesos[i];
+    }
 }
 
-void atualizarContagem(int *contagemInicial) {
-    *contagemInicial = contagem;
+void atualizarContagem() {
+    contagem = 0;
 }
 
 void retornarThreads() {
@@ -70,7 +76,6 @@ int main() {
     char * pipefile = "/tmp/pipefile";
     pthread_t esteira1_thread_id, esteira2_thread_id, esteira3_thread_id, input_thread_id;
     float pesoAtual = 0;
-    int contagemInicial = 0;
 
     EsteiraInfo esteira1Info = {5, 1000000};
     EsteiraInfo esteira2Info = {2, 500000};
@@ -87,13 +92,13 @@ int main() {
 
     while (1) {
         pthread_mutex_lock(&mutex);
-        if (running) {   
-            write(file, &contagem, sizeof(contagem));
+        if (running) {
+            write(file, &contagemTotal, sizeof(contagemTotal));
 
-            if (contagem - contagemInicial >= 1500){
+            if (contagem >= 1500){
                 pararThreads();
                 atualizarPeso(&pesoAtual);
-                atualizarContagem(&contagemInicial);
+                atualizarContagem();
                 retornarThreads();
             }
             write(file, &pesoAtual, sizeof(pesoAtual));
@@ -107,6 +112,7 @@ int main() {
     pthread_join(esteira3_thread_id, NULL);
 
     close(file);
+    unlink(pipefile);
 
     return 0;
 }
