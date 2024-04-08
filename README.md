@@ -2,4 +2,4 @@
 
 Elaborado pelos Alunos Guilherme Rosa e Lucas Correa
 
-O relatório pode ser acessado na raiz do projeto, no arquivo relatório.pdf
+O relatório pode ser acessado na raiz do projeto, no arquivo RelatorioAvaliacaoM1.pdf
